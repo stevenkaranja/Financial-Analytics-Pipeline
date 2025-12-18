@@ -1,0 +1,3 @@
+# Ignore raw crypto and stocks data folders
+/data/raw/crypto/
+/data/raw/stocks/
