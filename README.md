@@ -5,36 +5,16 @@ Financial-Analytics-Pipeline is a robust, production-ready, multi-service platfo
 
 ## Architecture Diagram
 ```mermaid
-flowchart TD
-	subgraph User
-		U1[Web Browser]
-	end
-	subgraph Dashboard
-		SD[Streamlit Dashboard]
-		DBE[DB Explorer]
-	end
-	subgraph API
-		FAPI[Flask API]
-	end
-	subgraph ETL
-		ETL[ETL Server]
-		SCH[Scheduler]
-	end
-	subgraph n8n
-		N8N[n8n Workflows]
-	end
-	subgraph DB
-		SQL[SQLite Database]
-	end
-	U1-->|HTTP|SD
-	U1-->|HTTP|DBE
-	SD-->|REST|FAPI
-	DBE-->|SQL|SQL
-	FAPI-->|SQL|SQL
-	N8N-->|Webhook|ETL
-	ETL-->|SQL|SQL
-	SCH-->|Script|ETL
-	SCH-->|Script|SQL
+graph TD
+  User[User (Web Browser)] -->|HTTP| Dashboard[Streamlit Dashboard]
+  User -->|HTTP| DBExplorer[DB Explorer]
+  Dashboard -->|REST| FlaskAPI[Flask API]
+  DBExplorer -->|SQL| SQLite[SQLite Database]
+  FlaskAPI -->|SQL| SQLite
+  n8n[n8n Workflows] -->|Webhook| ETL[ETL Server]
+  ETL -->|SQL| SQLite
+  Scheduler -->|Trigger| ETL
+  Scheduler -->|Script| SQLite
 ```
 
 ## Data Flow Diagram
