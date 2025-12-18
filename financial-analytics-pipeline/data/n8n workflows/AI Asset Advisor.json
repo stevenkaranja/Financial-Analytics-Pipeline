@@ -1,0 +1,647 @@
+{
+  "name": "AI Asset Advisor",
+  "nodes": [
+        {
+          "parameters": {
+            "functionCode": "// Ensure asset_type is set and not empty\nif (!$json.body.asset_type || $json.body.asset_type.trim() === '') {\n  $json.body.asset_type = 'finance';\n}\nreturn $json;"
+          },
+          "type": "n8n-nodes-base.function",
+          "typeVersion": 1,
+          "position": [
+            -600,
+            608
+          ],
+          "id": "newsapi-prep-function",
+          "name": "Prep NewsAPI Input"
+        },
+        {
+          "parameters": {
+            "functionCode": "// Map symbols to CoinGecko IDs\nconst symbolToId = {\n  BTC: 'bitcoin',\n  ETH: 'ethereum',\n  DOGE: 'dogecoin',\n  SOL: 'solana',\n  ADA: 'cardano',\n  XRP: 'ripple',\n  LTC: 'litecoin',\n  BCH: 'bitcoin-cash',\n  DOT: 'polkadot',\n  LINK: 'chainlink',\n  MATIC: 'matic-network',\n  AVAX: 'avalanche-2',\n  SHIB: 'shiba-inu',\n  TRX: 'tron',\n  XLM: 'stellar',\n  ATOM: 'cosmos',\n  UNI: 'uniswap',\n  XMR: 'monero',\n  ETC: 'ethereum-classic',\n  FIL: 'filecoin',\n  AAVE: 'aave',\n  // Add more as needed\n};\nconst symbol = $json.body.ticker.replace('_usd', '').toUpperCase();\n$json.body.coingecko_id = symbolToId[symbol] || symbol.toLowerCase();\nreturn $json;"
+          },
+          "type": "n8n-nodes-base.function",
+          "typeVersion": 1,
+          "position": [
+            -1000,
+            -400
+          ],
+          "id": "coingecko-id-mapper",
+          "name": "Map CoinGecko ID"
+        },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai_asset_advisor",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        368
+      ],
+      "id": "edb33951-882d-4721-90cf-08e20cf005cc",
+      "name": "Webhook",
+      "webhookId": "ai-asset-advisor-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.asset_type }}",
+              "rightValue": "crypto",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "afefe333-2ac4-4192-90d7-a8a473b1716e"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        368
+      ],
+      "id": "4285dd37-a381-4018-86aa-b9b555d7ecd0",
+      "name": "Check Asset Type",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/coins/{{ $json.body.coingecko_id }}/market_chart",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "vs_currency",
+              "value": "usd"
+            },
+            {
+              "name": "days",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        -304
+      ],
+      "id": "62962abb-269a-4d7e-81b5-2abe3859fe23",
+      "name": "Crypto Recent"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/coins/{{ $json.body.coingecko_id }}/market_chart",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "vs_currency",
+              "value": "usd"
+            },
+            {
+              "name": "days",
+              "value": "30"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        -96
+      ],
+      "id": "5079865f-fc09-4d67-afca-dd996f8875b0",
+      "name": "Crypto 30-Day"
+    },
+    {
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.body.ticker }}"
+            },
+            {
+              "name": "interval",
+              "value": "1min"
+            },
+            {
+              "name": "outputsize",
+              "value": "100"
+            },
+            {
+              "name": "apikey",
+              "value": "c8b06cafbbdd4f5aa28e912167284452"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        80
+      ],
+      "id": "469823f7-9877-433f-b920-1c5a80a0b190",
+      "name": "Stock 1m"
+    },
+    {
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.body.ticker }}"
+            },
+            {
+              "name": "interval",
+              "value": "15min"
+            },
+            {
+              "name": "outputsize",
+              "value": "100"
+            },
+            {
+              "name": "apikey",
+              "value": "c8b06cafbbdd4f5aa28e912167284452"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        272
+      ],
+      "id": "9d7dd68a-a583-4d14-ab7e-557e302372ef",
+      "name": "Stock 15m"
+    },
+    {
+      "parameters": {
+        "url": "https://api.twelvedata.com/time_series",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.body.ticker }}"
+            },
+            {
+              "name": "interval",
+              "value": "1h"
+            },
+            {
+              "name": "outputsize",
+              "value": "100"
+            },
+            {
+              "name": "apikey",
+              "value": "c8b06cafbbdd4f5aa28e912167284452"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -896,
+        464
+      ],
+      "id": "a68104d8-e44f-4d14-8e96-e8494db65cc8",
+      "name": "Stock 1h"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/everything",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.asset_type || 'finance' }}"
+            },
+            {
+              "name": "from",
+              "value": "={{ $now.minus({ days: 7 }).toFormat('yyyy-MM-dd') }}"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            },
+            {
+              "name": "sortBy",
+              "value": "publishedAt"
+            },
+            {
+              "name": "pageSize",
+              "value": "10"
+            },
+            {
+              "name": "apikey",
+              "value": "c9389cd7ed544a5eb95cde877f283b57"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -448,
+        608
+      ],
+      "id": "6deb56bf-616d-49a2-be9e-a5f5a2867a4a",
+      "name": "News API",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        -672,
+        176
+      ],
+      "id": "f86fdf6b-cd5a-4228-92de-48196ae6a89c",
+      "name": "Merge Prices"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        176
+      ],
+      "id": "fdc54ae2-9fd0-47c5-ab5d-5bbbdda4666f",
+      "name": "Aggregate Prices"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        352
+      ],
+      "id": "7065ca9d-5e02-433d-a331-e6ebee0c0fd6",
+      "name": "Merge News"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        16,
+        352
+      ],
+      "id": "74f8d8b7-55c1-4c54-a0a1-f20b29e5b74d",
+      "name": "Aggregate All"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert trader specializing in both stocks and cryptocurrencies. Analyze the market data and news below, then provide a clear trade recommendation.\n\n**Asset:** {{ $json.data[0].data[0].meta.symbol }} {{ $json.data[0].data[0].meta.type }}{{ $json.body.ticker }} ({{ $json.body.asset_type || 'stock' }})\n\n**Format your response exactly like this:**\n\n## 📊 RECOMMENDATION: [BUY/SELL/HOLD]\n\n### 📈 Technical Analysis\n- Recent price action and momentum\n- Key support/resistance levels (if data available)\n- Volume trends\n\n### 💭 Market Sentiment\n- Summary of recent news sentiment\n- Market context\n\n### 💰 Price Targets\n- **Entry Price:** $X.XX\n- **Stop-Loss:** $X.XX\n- **Take-Profit:** $X.XX\n\n### ⚠️ Risk Assessment\n[Low/Medium/High] - Brief explanation\n\n### 📝 Rationale\n2-3 sentences explaining your recommendation based on the data.\n\n---\n\n**Market Data:**\n{{ JSON.stringify($json.data) }}\n\nBe specific and actionable. Use the actual data provided.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        240,
+        352
+      ],
+      "id": "2dd2058b-79c1-48a9-b831-4ca8646a5d35",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        320,
+        576
+      ],
+      "id": "a8fe7a72-cfe2-4524-a99e-2bf64a8f50ec",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "1WkJc3ocq9XQlKYY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        352
+      ],
+      "id": "b5cb160f-9bc9-4e4c-af94-faabbea6cda8",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.datastagke.com",
+            "user-agent": "python-requests/2.32.5",
+            "content-length": "151",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "41.90.172.75",
+            "cf-ipcountry": "KE",
+            "cf-ray": "9acf318fdd497934-DAR",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-warp-tag-id": "934d4389-1c9b-458a-92ee-4e0c8624792c",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-forwarded-for": "41.90.172.75",
+            "x-forwarded-host": "n8n.datastagke.com",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "asset_symbol": "voo",
+            "asset_type": "stock",
+            "current_price": 628.84,
+            "quantity": 1,
+            "total_cost": 628.84,
+            "timestamp": "2025-12-12T21:13:04.272943"
+          },
+          "webhookUrl": "https://n8n.datastagke.com/webhook/ai_asset_advisor",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Asset Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Asset Type": {
+      "main": [
+        [
+          {
+            "node": "Prep NewsAPI Input",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "coingecko-id-mapper",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stock 1m",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Stock 15m",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Stock 1h",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prep NewsAPI Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "coingecko-id-mapper": {
+      "main": [
+        [
+          {
+            "node": "Crypto 30-Day",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Crypto Recent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep NewsAPI Input": {
+      "main": [
+        [
+          {
+            "node": "News API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock 1m": {
+      "main": [
+        [
+          {
+            "node": "Merge Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock 15m": {
+      "main": [
+        [
+          {
+            "node": "Merge Prices",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Prices": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Prices": {
+      "main": [
+        [
+          {
+            "node": "Merge News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News API": {
+      "main": [
+        [
+          {
+            "node": "Merge News",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge News": {
+      "main": [
+        [
+          {
+            "node": "Aggregate All",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate All": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto 30-Day": {
+      "main": [
+        [
+          {
+            "node": "Merge Prices",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Crypto Recent": {
+      "main": [
+        [
+          {
+            "node": "Merge Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock 1h": {
+      "main": [
+        [
+          {
+            "node": "Merge Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "eCQGcFFybpIyHUVs"
+  },
+  "versionId": "d714c63f-a7c8-4f73-955b-ed60500e0639",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7703d283e7a3bee4aa790b8172f7d0fb1afe622423416593648ea71e5a117f6"
+  },
+  "id": "jcbJR0n4L0kWcqSN",
+  "tags": []
+}

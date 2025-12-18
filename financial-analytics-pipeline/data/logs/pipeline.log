@@ -1,0 +1,173 @@
+2025-12-07 20:04:42,462 - extract - INFO - DataExtractor initialized
+2025-12-07 20:04:42,463 - transform - INFO - DataTransformer initialized
+2025-12-07 20:04:42,463 - load - INFO - DataLoader initialized with database: C:\Users\HomePC\Documents\Automation Portfolio\financial-analytics-pipeline\data\database\finance_data.db
+2025-12-07 20:04:42,464 - __main__ - INFO - ETL Pipeline initialized
+2025-12-07 20:04:42,464 - __main__ - INFO -   - Crypto assets: 5
+2025-12-07 20:04:42,466 - __main__ - INFO -   - Stock assets: 5
+2025-12-07 20:04:42,467 - __main__ - INFO - ============================================================
+2025-12-07 20:04:42,468 - __main__ - INFO - ETL PIPELINE EXECUTION STARTED
+2025-12-07 20:04:42,468 - __main__ - INFO - Start Time: 2025-12-07 20:04:42
+2025-12-07 20:04:42,470 - __main__ - INFO - ============================================================
+2025-12-07 20:04:42,470 - __main__ - INFO - 
+--- PHASE 1: EXTRACT ---
+2025-12-07 20:04:42,475 - extract - INFO - Starting batch extraction: 5 crypto, 5 stocks
+2025-12-07 20:04:42,476 - extract - INFO - Extracting crypto data for bitcoin
+2025-12-07 20:04:44,092 - extract - INFO - Successfully extracted bitcoin: $89847
+2025-12-07 20:04:44,093 - extract - INFO - Extracting crypto data for ethereum
+2025-12-07 20:04:44,397 - extract - INFO - Successfully extracted ethereum: $3034.37
+2025-12-07 20:04:44,397 - extract - INFO - Extracting crypto data for solana
+2025-12-07 20:04:44,692 - extract - INFO - Successfully extracted solana: $131.56
+2025-12-07 20:04:44,693 - extract - INFO - Extracting crypto data for cardano
+2025-12-07 20:04:44,988 - extract - INFO - Successfully extracted cardano: $0.423338
+2025-12-07 20:04:44,990 - extract - INFO - Extracting crypto data for ripple
+2025-12-07 20:04:45,290 - extract - INFO - Successfully extracted ripple: $2.05
+2025-12-07 20:04:45,291 - extract - INFO - Extracting stock data for AAPL
+2025-12-07 20:04:46,742 - extract - INFO - Successfully extracted AAPL: $278.78
+2025-12-07 20:04:46,742 - extract - INFO - Extracting stock data for NVDA
+2025-12-07 20:04:47,111 - extract - INFO - Successfully extracted NVDA: $182.41
+2025-12-07 20:04:47,111 - extract - INFO - Extracting stock data for MSFT
+2025-12-07 20:04:47,469 - extract - INFO - Successfully extracted MSFT: $483.16
+2025-12-07 20:04:47,469 - extract - INFO - Extracting stock data for GOOGL
+2025-12-07 20:04:47,823 - extract - INFO - Successfully extracted GOOGL: $321.26999
+2025-12-07 20:04:47,823 - extract - INFO - Extracting stock data for TSLA
+2025-12-07 20:04:48,191 - extract - INFO - Successfully extracted TSLA: $455.0
+2025-12-07 20:04:48,192 - extract - INFO - Batch extraction complete: 5 crypto, 5 stocks
+2025-12-07 20:04:48,192 - __main__ - INFO - Extract Phase Complete:
+2025-12-07 20:04:48,193 - __main__ - INFO -   - Crypto: 5
+2025-12-07 20:04:48,193 - __main__ - INFO -   - Stocks: 5
+2025-12-07 20:04:48,194 - __main__ - INFO -   - Errors: 0
+2025-12-07 20:04:48,194 - __main__ - INFO - 
+--- PHASE 2: TRANSFORM ---
+2025-12-07 20:04:48,195 - transform - INFO - Starting batch transformation
+2025-12-07 20:04:48,196 - transform - INFO - Transformed crypto: bitcoin @ $89847.0
+2025-12-07 20:04:48,196 - transform - INFO - Transformed crypto: ethereum @ $3034.37
+2025-12-07 20:04:48,196 - transform - INFO - Transformed crypto: solana @ $131.56
+2025-12-07 20:04:48,197 - transform - INFO - Transformed crypto: cardano @ $0.423338
+2025-12-07 20:04:48,197 - transform - INFO - Transformed crypto: ripple @ $2.05
+2025-12-07 20:04:48,198 - transform - INFO - Transformed stock: AAPL @ $278.78
+2025-12-07 20:04:48,199 - transform - INFO - Transformed stock: NVDA @ $182.41
+2025-12-07 20:04:48,200 - transform - INFO - Transformed stock: MSFT @ $483.16
+2025-12-07 20:04:48,200 - transform - INFO - Transformed stock: GOOGL @ $321.27
+2025-12-07 20:04:48,201 - transform - INFO - Transformed stock: TSLA @ $455.0
+2025-12-07 20:04:48,201 - transform - INFO - Transformation complete: 5 crypto, 5 stocks
+2025-12-07 20:04:48,202 - transform - INFO - Statistics calculated: 10 total records
+2025-12-07 20:04:48,202 - __main__ - INFO - Transform Phase Complete:
+2025-12-07 20:04:48,203 - __main__ - INFO -   - Valid crypto: 5
+2025-12-07 20:04:48,203 - __main__ - INFO -   - Valid stocks: 5
+2025-12-07 20:04:48,204 - __main__ - INFO -   - Invalid filtered: 0
+2025-12-07 20:04:48,204 - __main__ - INFO - 
+--- PHASE 3: LOAD ---
+2025-12-07 20:04:48,210 - load - INFO - Starting batch load to database
+2025-12-07 20:04:48,215 - load - ERROR - Error loading crypto bitcoin: table crypto_prices has no column named coin_id
+2025-12-07 20:04:48,216 - load - ERROR - Error loading crypto ethereum: table crypto_prices has no column named coin_id
+2025-12-07 20:04:48,219 - load - ERROR - Error loading crypto solana: table crypto_prices has no column named coin_id
+2025-12-07 20:04:48,220 - load - ERROR - Error loading crypto cardano: table crypto_prices has no column named coin_id
+2025-12-07 20:04:48,226 - load - ERROR - Error loading crypto ripple: table crypto_prices has no column named coin_id
+2025-12-07 20:04:48,228 - load - ERROR - Error loading stock AAPL: table stock_prices has no column named price_usd
+2025-12-07 20:04:48,228 - load - ERROR - Error loading stock NVDA: table stock_prices has no column named price_usd
+2025-12-07 20:04:48,229 - load - ERROR - Error loading stock MSFT: table stock_prices has no column named price_usd
+2025-12-07 20:04:48,231 - load - ERROR - Error loading stock GOOGL: table stock_prices has no column named price_usd
+2025-12-07 20:04:48,232 - load - ERROR - Error loading stock TSLA: table stock_prices has no column named price_usd
+2025-12-07 20:04:48,235 - load - INFO - Batch load complete: 0 records loaded
+2025-12-07 20:04:48,236 - load - INFO -   - Crypto: 0 loaded, 5 failed
+2025-12-07 20:04:48,237 - load - INFO -   - Stocks: 0 loaded, 5 failed
+2025-12-07 20:04:48,238 - __main__ - INFO - Load Phase Complete:
+2025-12-07 20:04:48,242 - __main__ - INFO -   - Total loaded: 0
+2025-12-07 20:04:48,242 - __main__ - INFO -   - Crypto loaded: 0
+2025-12-07 20:04:48,243 - __main__ - INFO -   - Stocks loaded: 0
+2025-12-07 20:04:48,243 - __main__ - INFO - 
+--- PHASE 4: VERIFICATION ---
+2025-12-07 20:04:48,259 - load - ERROR - Verification error: no such column: timestamp
+2025-12-07 20:04:48,260 - __main__ - INFO - Verification Complete:
+2025-12-07 20:04:48,261 - __main__ - ERROR - Pipeline execution error: 'NoneType' object is not subscriptable
+2025-12-07 20:04:48,263 - __main__ - INFO - 
+============================================================
+2025-12-07 20:04:48,264 - __main__ - INFO - ETL PIPELINE EXECUTION COMPLETED
+2025-12-07 20:04:48,264 - __main__ - INFO - End Time: 2025-12-07 20:04:48
+2025-12-07 20:04:48,265 - __main__ - INFO - Duration: 5.80 seconds
+2025-12-07 20:04:48,278 - __main__ - INFO - Status: FAILED
+2025-12-07 20:04:48,278 - __main__ - INFO - ============================================================
+2025-12-07 20:05:59,357 - extract - INFO - DataExtractor initialized
+2025-12-07 20:05:59,357 - transform - INFO - DataTransformer initialized
+2025-12-07 20:05:59,358 - load - INFO - DataLoader initialized with database: C:\Users\HomePC\Documents\Automation Portfolio\financial-analytics-pipeline\data\database\finance_data.db
+2025-12-07 20:05:59,358 - __main__ - INFO - ETL Pipeline initialized
+2025-12-07 20:05:59,361 - __main__ - INFO -   - Crypto assets: 5
+2025-12-07 20:05:59,362 - __main__ - INFO -   - Stock assets: 5
+2025-12-07 20:05:59,363 - __main__ - INFO - ============================================================
+2025-12-07 20:05:59,363 - __main__ - INFO - ETL PIPELINE EXECUTION STARTED
+2025-12-07 20:05:59,364 - __main__ - INFO - Start Time: 2025-12-07 20:05:59
+2025-12-07 20:05:59,365 - __main__ - INFO - ============================================================
+2025-12-07 20:05:59,365 - __main__ - INFO - 
+--- PHASE 1: EXTRACT ---
+2025-12-07 20:05:59,365 - extract - INFO - Starting batch extraction: 5 crypto, 5 stocks
+2025-12-07 20:05:59,366 - extract - INFO - Extracting crypto data for bitcoin
+2025-12-07 20:06:00,901 - extract - INFO - Successfully extracted bitcoin: $89815
+2025-12-07 20:06:00,901 - extract - INFO - Extracting crypto data for ethereum
+2025-12-07 20:06:01,200 - extract - INFO - Successfully extracted ethereum: $3035.16
+2025-12-07 20:06:01,204 - extract - INFO - Extracting crypto data for solana
+2025-12-07 20:06:01,524 - extract - INFO - Successfully extracted solana: $131.6
+2025-12-07 20:06:01,525 - extract - INFO - Extracting crypto data for cardano
+2025-12-07 20:06:01,830 - extract - INFO - Successfully extracted cardano: $0.424003
+2025-12-07 20:06:01,831 - extract - INFO - Extracting crypto data for ripple
+2025-12-07 20:06:02,146 - extract - INFO - Successfully extracted ripple: $2.05
+2025-12-07 20:06:02,147 - extract - INFO - Extracting stock data for AAPL
+2025-12-07 20:06:03,503 - extract - INFO - Successfully extracted AAPL: $278.78
+2025-12-07 20:06:03,503 - extract - INFO - Extracting stock data for NVDA
+2025-12-07 20:06:03,867 - extract - INFO - Successfully extracted NVDA: $182.41
+2025-12-07 20:06:03,867 - extract - INFO - Extracting stock data for MSFT
+2025-12-07 20:06:04,242 - extract - INFO - Successfully extracted MSFT: $483.16
+2025-12-07 20:06:04,242 - extract - INFO - Extracting stock data for GOOGL
+2025-12-07 20:06:04,603 - extract - INFO - Successfully extracted GOOGL: $321.26999
+2025-12-07 20:06:04,604 - extract - INFO - Extracting stock data for TSLA
+2025-12-07 20:06:04,967 - extract - INFO - Successfully extracted TSLA: $455.0
+2025-12-07 20:06:04,968 - extract - INFO - Batch extraction complete: 5 crypto, 5 stocks
+2025-12-07 20:06:04,968 - __main__ - INFO - Extract Phase Complete:
+2025-12-07 20:06:04,969 - __main__ - INFO -   - Crypto: 5
+2025-12-07 20:06:04,969 - __main__ - INFO -   - Stocks: 5
+2025-12-07 20:06:04,969 - __main__ - INFO -   - Errors: 0
+2025-12-07 20:06:04,970 - __main__ - INFO - 
+--- PHASE 2: TRANSFORM ---
+2025-12-07 20:06:04,970 - transform - INFO - Starting batch transformation
+2025-12-07 20:06:04,971 - transform - INFO - Transformed crypto: bitcoin @ $89815.0
+2025-12-07 20:06:04,971 - transform - INFO - Transformed crypto: ethereum @ $3035.16
+2025-12-07 20:06:04,972 - transform - INFO - Transformed crypto: solana @ $131.6
+2025-12-07 20:06:04,972 - transform - INFO - Transformed crypto: cardano @ $0.424003
+2025-12-07 20:06:04,973 - transform - INFO - Transformed crypto: ripple @ $2.05
+2025-12-07 20:06:04,973 - transform - INFO - Transformed stock: AAPL @ $278.78
+2025-12-07 20:06:04,974 - transform - INFO - Transformed stock: NVDA @ $182.41
+2025-12-07 20:06:04,974 - transform - INFO - Transformed stock: MSFT @ $483.16
+2025-12-07 20:06:04,975 - transform - INFO - Transformed stock: GOOGL @ $321.27
+2025-12-07 20:06:04,975 - transform - INFO - Transformed stock: TSLA @ $455.0
+2025-12-07 20:06:04,976 - transform - INFO - Transformation complete: 5 crypto, 5 stocks
+2025-12-07 20:06:04,976 - transform - INFO - Statistics calculated: 10 total records
+2025-12-07 20:06:04,978 - __main__ - INFO - Transform Phase Complete:
+2025-12-07 20:06:04,979 - __main__ - INFO -   - Valid crypto: 5
+2025-12-07 20:06:04,981 - __main__ - INFO -   - Valid stocks: 5
+2025-12-07 20:06:04,982 - __main__ - INFO -   - Invalid filtered: 0
+2025-12-07 20:06:04,982 - __main__ - INFO - 
+--- PHASE 3: LOAD ---
+2025-12-07 20:06:04,983 - load - INFO - Starting batch load to database
+2025-12-07 20:06:04,992 - load - INFO - Batch load complete: 10 records loaded
+2025-12-07 20:06:04,992 - load - INFO -   - Crypto: 5 loaded, 0 failed
+2025-12-07 20:06:04,997 - load - INFO -   - Stocks: 5 loaded, 0 failed
+2025-12-07 20:06:04,998 - __main__ - INFO - Load Phase Complete:
+2025-12-07 20:06:05,002 - __main__ - INFO -   - Total loaded: 10
+2025-12-07 20:06:05,002 - __main__ - INFO -   - Crypto loaded: 5
+2025-12-07 20:06:05,003 - __main__ - INFO -   - Stocks loaded: 5
+2025-12-07 20:06:05,003 - __main__ - INFO - 
+--- PHASE 4: VERIFICATION ---
+2025-12-07 20:06:05,009 - load - INFO - Database verification complete:
+2025-12-07 20:06:05,016 - load - INFO -   - Total crypto records: 1394
+2025-12-07 20:06:05,017 - load - INFO -   - Total stock records: 206
+2025-12-07 20:06:05,018 - load - INFO -   - Latest crypto: 2025-12-07T20:06:02.146568
+2025-12-07 20:06:05,019 - load - INFO -   - Latest stock: 2025-12-07T20:06:04.967747
+2025-12-07 20:06:05,022 - __main__ - INFO - Verification Complete:
+2025-12-07 20:06:05,022 - __main__ - INFO -   - Database crypto records: 1394
+2025-12-07 20:06:05,025 - __main__ - INFO -   - Database stock records: 206
+2025-12-07 20:06:05,026 - __main__ - INFO - 
+============================================================
+2025-12-07 20:06:05,033 - __main__ - INFO - ETL PIPELINE EXECUTION COMPLETED
+2025-12-07 20:06:05,035 - __main__ - INFO - End Time: 2025-12-07 20:06:05
+2025-12-07 20:06:05,035 - __main__ - INFO - Duration: 5.66 seconds
+2025-12-07 20:06:05,036 - __main__ - INFO - Status: SUCCESS
+2025-12-07 20:06:05,037 - __main__ - INFO - ============================================================

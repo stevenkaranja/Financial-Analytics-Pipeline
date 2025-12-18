@@ -1,0 +1,237 @@
+{
+  "name": "asset_lookup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asset_lookup",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "f6808694-afd8-4b86-a545-c14cf4652589",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        96
+      ],
+      "webhookId": "asset_lookup"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/search?query={{ $json.query }}\n",
+        "options": {}
+      },
+      "id": "e0cff5f7-e889-43e6-a954-7cbbdfdb6a50",
+      "name": "Search CoinGecko",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={{$json.query}}&apikey=DJ5A3ZR33IDG9QOJ",
+        "options": {}
+      },
+      "id": "7dd81132-11e4-4de8-8726-c1bdeda4cf06",
+      "name": "Search Alpha Vantage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -368,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $input.first().json;\nconst coins = data.coins || [];\n\nif (coins.length === 0) {\n  return { error: 'No crypto assets found' };\n}\n\nconst coin = coins[0];\nreturn {\n  asset_type: 'crypto',\n  symbol: coin.symbol.toUpperCase(),\n  name: coin.name,\n  source: 'CoinGecko',\n  is_new: true\n};"
+      },
+      "id": "5325ea24-df71-418c-ad6d-fba707f581af",
+      "name": "Transform Crypto Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $input.first().json;\nconst matches = data.bestMatches || [];\n\nif (matches.length === 0) {\n  return { error: 'No stock assets found' };\n}\n\nconst match = matches[0];\nreturn {\n  asset_type: 'stock',\n  symbol: match['1. symbol'],\n  name: match['2. name'],\n  source: 'Alpha Vantage',\n  is_new: true\n};"
+      },
+      "id": "0f35c9af-1615-4150-a130-5d5b415665a1",
+      "name": "Transform Stock Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "4e18ce23-d40e-4afb-a663-cf8756686a18",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        128,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Get query safely from body\nconst rawQuery = item.body?.query ?? '';\nconst query = String(rawQuery).trim();\n\n// Get timestamp\nconst timestamp = item.body?.timestamp || new Date().toISOString();\n\n// Asset type detection\nconst cryptoPatterns = [\n  'btc', 'eth', 'bitcoin', 'ethereum', 'crypto',\n  'coin', 'ada', 'xrp', 'sol', 'doge', 'usdt', 'tether'\n];\n\nconst isCrypto = cryptoPatterns.some(p =>\n  query.toLowerCase().includes(p)\n);\n\nreturn {\n  query,\n  asset_type: isCrypto ? 'crypto' : 'stock',\n  timestamp\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        96
+      ],
+      "id": "b3aff6ba-7137-422a-b60f-3cbce7fce2b1",
+      "name": "Parse Query & Route"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e8f7922a-3c7d-448c-afbf-cb5b7a5ca94a",
+              "leftValue": "={{ $json.asset_type }}",
+              "rightValue": "crypto",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -624,
+        96
+      ],
+      "id": "4e704fa4-dbec-415f-8e8a-c7536c0a4804",
+      "name": "Route by Asset Type"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Query & Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search CoinGecko": {
+      "main": [
+        [
+          {
+            "node": "Transform Crypto Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Alpha Vantage": {
+      "main": [
+        [
+          {
+            "node": "Transform Stock Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Crypto Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Stock Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Query & Route": {
+      "main": [
+        [
+          {
+            "node": "Route by Asset Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Asset Type": {
+      "main": [
+        [
+          {
+            "node": "Search CoinGecko",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Alpha Vantage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "eCQGcFFybpIyHUVs"
+  },
+  "versionId": "059ab961-05f4-4334-bd36-55619acaefd2",
+  "meta": {
+    "instanceId": "f7703d283e7a3bee4aa790b8172f7d0fb1afe622423416593648ea71e5a117f6"
+  },
+  "id": "OS2O9ezo9nA50fl6",
+  "tags": []
+}

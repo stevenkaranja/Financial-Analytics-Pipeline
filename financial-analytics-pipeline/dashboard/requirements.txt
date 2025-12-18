@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+requests
+plotly
+flask
+flask-cors
+openpyxl
+urllib3

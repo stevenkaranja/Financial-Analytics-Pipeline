@@ -1,0 +1,414 @@
+{
+  "name": "asset_ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "/// Robust handling for webhook input\nconst data = $input.first().json; \n\n// The coin ID from Get price data URL\nconst coinId = Object.keys(data)[0]; // e.g., 'tether'\n\n// Access the actual price data\nconst priceData = data[coinId];\n\nif (!priceData || !priceData.usd) {\n  return { error: 'No price data found', coinId, data };\n}\n\nreturn {\n  asset: coinId + '_usd',\n  price: priceData.usd,\n  market_cap: priceData.usd_market_cap || null,\n  volume_24h: priceData.usd_24h_vol || null,\n  change_24h: priceData.usd_24h_change || null,\n  timestamp: new Date().toISOString(),\n  symbol: coinId,\n  source: 'CoinGecko'\n};\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -304
+      ],
+      "id": "c68a4fa1-72b8-488c-8e28-8972281c9af7",
+      "name": "Transform Crypto Data"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/search?query={{ $json.symbol }}",
+        "options": {}
+      },
+      "id": "41508c14-6829-4311-8b06-fd35ed7ec991",
+      "name": "Fetch Crypto Id",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -896,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/simple/price?ids={{ $json.coins[0].id }}&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -672,
+        -304
+      ],
+      "id": "dd685a0f-fd8a-4156-ba85-25d497b9ec56",
+      "name": "Get price data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "69259a4b-7ee1-487b-9f8d-8bbe34f3d043",
+              "leftValue": "={{ $json.asset_type }}",
+              "rightValue": "crypto",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        -208
+      ],
+      "id": "446ac940-4f1b-4479-ad4d-358489c21797",
+      "name": "Route by Asset Type"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Safely extract the first asset entry\nconst asset = item.body?.data?.[0] || {};\n\n// Normalize fields\nconst runId = $execution.id;\nconst assetType = asset.asset_type || 'unknown';\nconst symbol = asset.asset_symbol || asset.symbol || '';\nconst dataType = item.body?.data_type || 'unknown';\nconst timestamp = new Date().toISOString();\n\nreturn {\n  run_id: runId,\n  data_type: dataType,\n  asset_type: assetType,\n  symbol: symbol,\n  timestamp: timestamp\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        -208
+      ],
+      "id": "a19fbbd0-926e-4158-9d7e-83ab96400388",
+      "name": "Generate Run ID"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0b2d1477-6969-47d0-8517-bae5975b9596",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.100.13:5001/api/etl/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "be752531-e17d-4f56-ab3f-0d2a646e80d1",
+      "name": "Store Stock (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -224,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.100.13:5001/api/etl/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": {
+          "data_type": "crypto_prices",
+          "data": [
+            "={{$json}}"
+          ]
+        },
+        "options": {}
+      },
+      "id": "b7b0721c-eecb-4bfb-a648-a37bdb40fd73",
+      "name": "Store Crypto (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -224,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "asset_ingest",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "b7d393d8-9415-499a-a048-dc17d7f48324",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1568,
+        -224
+      ],
+      "webhookId": "asset_ingest"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst symbol = $node['Generate Run ID'].json.symbol;\nconst series = data['Time Series (Daily)'] || {};\n\nconst dates = Object.keys(series).sort().reverse();\nif (dates.length === 0) {\n  return [\n    {\n      json: {\n        data_type: 'stock_prices',\n        data: []\n      }\n    }\n  ];\n}\n\nconst latestDate = dates[0];\nconst latest = series[latestDate];\n\nreturn [\n  {\n    json: {\n      data_type: 'stock_prices',\n      data: [\n        {\n          symbol: symbol,\n          date: latestDate,\n          open: parseFloat(latest['1. open']),\n          high: parseFloat(latest['2. high']),\n          low: parseFloat(latest['3. low']),\n          close: parseFloat(latest['4. close']),\n          volume: latest['6. volume']\n            ? parseInt(latest['6. volume'], 10)\n            : null\n        }\n      ]\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        -112
+      ],
+      "id": "ad404700-7ef4-4f5d-b49c-3d367b765210",
+      "name": "Transform Stock Data"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={{ $json.bestMatches[0]['1. symbol'] }}&apikey=FUAN431NX53T595V\n",
+        "options": {}
+      },
+      "id": "f0c32258-3185-4175-b79f-e2639c6dca15",
+      "name": "Get Stock Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -672,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={{ $json.symbol }}&apikey=DJ5A3ZR33IDG9QOJ ",
+        "options": {}
+      },
+      "id": "4c5b6a57-af91-4c19-b9fd-ed1eb8aa7576",
+      "name": "Fetch Stock id",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -896,
+        -112
+      ]
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.datastagke.com",
+            "user-agent": "python-requests/2.32.5",
+            "content-length": "225",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1",
+            "cf-connecting-ip": "41.90.172.75",
+            "cf-ipcountry": "KE",
+            "cf-ray": "9ae546c54a4e7250-MPM",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-warp-tag-id": "934d4389-1c9b-458a-92ee-4e0c8624792c",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "x-forwarded-for": "41.90.172.75",
+            "x-forwarded-host": "n8n.datastagke.com",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "data_type": "holding",
+            "data": [
+              {
+                "asset_symbol": "NFLX",
+                "asset_type": "stock",
+                "quantity_owned": 2.10106104,
+                "purchase_price": 95.19,
+                "purchase_date": "2025-12-15",
+                "total_cost": 200.0000003976,
+                "fees": 0,
+                "notes": ""
+              }
+            ]
+          },
+          "webhookUrl": "https://n8n.datastagke.com/webhook/asset_ingest",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Fetch Crypto Id": {
+      "main": [
+        [
+          {
+            "node": "Get price data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get price data": {
+      "main": [
+        [
+          {
+            "node": "Transform Crypto Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Asset Type": {
+      "main": [
+        [
+          {
+            "node": "Fetch Crypto Id",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Stock id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Run ID": {
+      "main": [
+        [
+          {
+            "node": "Route by Asset Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Crypto Data": {
+      "main": [
+        [
+          {
+            "node": "Store Crypto (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Stock (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Crypto (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Run ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Stock Data": {
+      "main": [
+        [
+          {
+            "node": "Store Stock (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stock Data": {
+      "main": [
+        [
+          {
+            "node": "Transform Stock Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Stock id": {
+      "main": [
+        [
+          {
+            "node": "Get Stock Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "eCQGcFFybpIyHUVs"
+  },
+  "versionId": "af381b81-0718-42bb-aa58-3ab9bde7b57b",
+  "meta": {
+    "instanceId": "f7703d283e7a3bee4aa790b8172f7d0fb1afe622423416593648ea71e5a117f6"
+  },
+  "id": "0HQQ6bFke6Az58dY",
+  "tags": []
+}

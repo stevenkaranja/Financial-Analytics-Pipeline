@@ -1,0 +1,393 @@
+{
+  "name": "Hourly Portfolio Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "86196b4b-b1b2-498b-8d71-fdfce958956d",
+      "name": "Schedule Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1696,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://192.168.100.13:5000/api/portfolio/holdings",
+        "options": {}
+      },
+      "id": "20167428-e528-49dd-bdb2-77e0e7d5dd4c",
+      "name": "Get Portfolio Holdings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1488,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract unique assets from holdings\nconst holdings = $input.item.json.holdings || [];\n\nconst assets = holdings.map(h => ({\n  symbol: h.asset_symbol,\n  type: h.asset_type,\n  quantity: h.quantity_owned\n}));\n\nreturn assets.map(asset => ({ json: asset }));"
+      },
+      "id": "382c7d73-459b-42c6-948b-26674e8d6206",
+      "name": "Extract Assets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "crypto-condition",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "crypto",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d9f15974-1d43-4070-91ef-aeb10a7d765d",
+      "name": "Route by Asset Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert symbol format for CoinGecko\n// bitcoin_usd -> bitcoin\n// ethereum_usd -> ethereum\n\nconst originalSymbol = $input.item.json.symbol;\nconst coinGeckoId = originalSymbol.replace('_usd', '');\n\nreturn {\n  json: {\n    symbol: originalSymbol,\n    coinGeckoId: coinGeckoId,\n    type: $input.item.json.type,\n    quantity: $input.item.json.quantity\n  }\n};"
+      },
+      "id": "adc9c007-04a4-4cce-b7a5-28bf105a147a",
+      "name": "Convert Crypto Symbol",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.coingecko.com/api/v3/simple/price?ids={{ $json.coinGeckoId }}&vs_currencies=usd&include_24hr_change=true",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "1a78d8bd-8118-41e2-93d0-db59406045c8",
+      "name": "Fetch Crypto Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -688,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform crypto data for storage\n// Get data from Convert Crypto Symbol node (passed via pairedItem)\nconst convertNode = $('Convert Crypto Symbol').item.json;\nconst originalSymbol = convertNode.symbol;\nconst coinGeckoId = convertNode.coinGeckoId;\n\n// Get price response from HTTP Request\nconst priceResponse = $input.item.json;\nconst priceData = priceResponse[coinGeckoId];\n\nif (!priceData || !priceData.usd) {\n  throw new Error(`No price data for ${coinGeckoId}. Check if symbol is correct.`);\n}\n\nreturn {\n  json: {\n    asset: originalSymbol,\n    price: priceData.usd,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "63f3636e-81e8-40b7-bcfe-6b6744bdae8d",
+      "name": "Transform Crypto Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.100.13:5000/api/store_crypto_price",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "asset",
+              "value": "={{ $json.asset }}"
+            },
+            {
+              "name": "price",
+              "value": "={{ $json.price }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "90fa04bc-dfc9-4cba-b052-5702b5e64b8e",
+      "name": "Store Crypto Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -288,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.twelvedata.com/time_series?symbol={{ $json.symbol }}&interval=1min&apikey=c8b06cafbbdd4f5aa28e912167284452&outputsize=60",
+        "options": {}
+      },
+      "id": "c4efd7c6-749e-402b-8bfe-dc21310a828f",
+      "name": "Fetch Stock Price",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract input\nconst item = $input.first().json;\n\n// Pull symbol from meta block\nconst symbol = item.meta?.symbol || 'UNKNOWN';\n\n// Pull values array\nconst values = item.values;\n\nif (!values || values.length === 0) {\n  throw new Error('No stock data available');\n}\n\n// The API already gives values sorted newest → oldest\nconst latest = values[0];\n\n// Return structured data\nreturn {\n  json: {\n    symbol: symbol,\n    date: latest.datetime.split(' ')[0],\n    open: parseFloat(latest.open),\n    high: parseFloat(latest.high),\n    low: parseFloat(latest.low),\n    close: parseFloat(latest.close),\n    volume: parseInt(latest.volume)\n  }\n};\n"
+      },
+      "id": "6d2ba70a-1594-432b-a9fd-411476d47baf",
+      "name": "Transform Stock Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.100.13:5000/api/store_stock_data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "symbol",
+              "value": "={{ $json.symbol }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.date }}"
+            },
+            {
+              "name": "open",
+              "value": "={{ $json.open }}"
+            },
+            {
+              "name": "high",
+              "value": "={{ $json.high }}"
+            },
+            {
+              "name": "low",
+              "value": "={{ $json.low }}"
+            },
+            {
+              "name": "close",
+              "value": "={{ $json.close }}"
+            },
+            {
+              "name": "volume",
+              "value": "={{ $json.volume }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dbfc78c8-eb52-4799-830e-828e7f998521",
+      "name": "Store Stock Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -496,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log completion\nconst asset = $input.first().json.asset || $input.first().json.symbol;\nconst type = $input.first().json.asset ? 'crypto' : 'stock';\n\nconsole.log(`✓ Ingested ${type}: ${asset}`);\n\nreturn $input.all();"
+      },
+      "id": "cfe0092a-2740-403f-aee5-376eb6771fed",
+      "name": "Log Completion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -32
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get Portfolio Holdings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Portfolio Holdings": {
+      "main": [
+        [
+          {
+            "node": "Extract Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Assets": {
+      "main": [
+        [
+          {
+            "node": "Route by Asset Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Asset Type": {
+      "main": [
+        [
+          {
+            "node": "Convert Crypto Symbol",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Stock Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Crypto Symbol": {
+      "main": [
+        [
+          {
+            "node": "Fetch Crypto Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Crypto Price": {
+      "main": [
+        [
+          {
+            "node": "Transform Crypto Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Crypto Data": {
+      "main": [
+        [
+          {
+            "node": "Store Crypto Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Crypto Price": {
+      "main": [
+        [
+          {
+            "node": "Log Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Stock Price": {
+      "main": [
+        [
+          {
+            "node": "Transform Stock Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Stock Data": {
+      "main": [
+        [
+          {
+            "node": "Store Stock Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Stock Data": {
+      "main": [
+        [
+          {
+            "node": "Log Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "eCQGcFFybpIyHUVs"
+  },
+  "versionId": "cc10c571-19ff-4cc2-82d0-f1bf5e7842c6",
+  "meta": {
+    "instanceId": "f7703d283e7a3bee4aa790b8172f7d0fb1afe622423416593648ea71e5a117f6"
+  },
+  "id": "Rkt31eHRVEjZ56zu",
+  "tags": []
+}
