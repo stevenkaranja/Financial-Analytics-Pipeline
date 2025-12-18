@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  streamlit:
+    build: ./financial-analytics-pipeline/dashboard
+    command: streamlit run app.py --server.port 8501
+    ports:
+      - "8501:8501"
+    volumes:
+      - db_data:/app/data/database
+    environment:
+      - DB_PATH=/app/data/database/finance_data.db
+      # Add other secrets as needed
+    depends_on:
+      - etl
+      - flaskapi
+      - n8n
+
+  etl:
+    build: ./financial-analytics-pipeline/data/raw
+    command: python etl_server.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - db_data:/app/data/database
+    environment:
+      - DB_PATH=/app/data/database/finance_data.db
+
+  flaskapi:
+    build:
+      context: ./financial-analytics-pipeline/flaskapi
+      dockerfile: Dockerfile
+    command: python db_api_server.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - db_data:/app/data/database
+    environment:
+      - DB_PATH=/app/data/database/finance_data.db
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Europe/London
+      # Add n8n secrets here
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  scheduler:
+    build:
+      context: ./financial-analytics-pipeline/scheduler
+      dockerfile: Dockerfile
+    command: python hourly_ingest.py
+    volumes:
+      - db_data:/app/data/database
+    environment:
+      - DB_PATH=/app/data/database/finance_data.db
+    depends_on:
+      - etl
+      - flaskapi
+
+volumes:
+  db_data:
+  n8n_data:
